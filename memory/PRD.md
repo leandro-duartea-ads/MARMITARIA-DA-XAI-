@@ -12,28 +12,35 @@ Site completo, moderno e profissional para marmitaria "Marmitaria da Xai" em Cam
 
 ## O Que Foi Implementado
 
-### Versão 3.0 (09/03/2026) - ATUAL
+### Versão 4.0 (09/03/2026) - ATUAL
 
 #### Popup de Pedido Completo
-- [x] Nome, WhatsApp, Endereço, Ponto de Referência
-- [x] Seleção de tamanho (P/M/G) com preços
-- [x] Seletor de quantidade (+/-)
-- [x] Adicionar bebidas (6 opções com preços)
-  - Suco Laranja R$8, Maracujá R$7, Limão R$6
-  - Coca Lata R$6, Guaraná R$5, Água R$3
-- [x] Forma de pagamento (Pix, Dinheiro, Cartão)
-- [x] Campo de troco quando selecionado Dinheiro
-- [x] Total calculado automaticamente
-- [x] Envio formatado para WhatsApp
+- [x] Dados do cliente: Nome, WhatsApp, Endereço, Ponto de Referência
+- [x] **Múltiplos tamanhos de marmita** - cada tamanho com seu próprio contador
+  - P (Pequena): R$ 18,00
+  - M (Média): R$ 22,00
+  - G (Grande): R$ 28,00
+- [x] Pode pedir várias marmitas de tamanhos diferentes simultaneamente
+- [x] Validação: pelo menos 1 marmita obrigatória
 
-#### Sistema de Cardápio por Dia
-- [x] Dias travados - só o dia atual é clicável
-- [x] Ícone de cadeado nos dias não disponíveis
-- [x] Modal "Cardápio Indisponível" ao clicar em outro dia
-- [x] Mostra sugestão do cardápio de hoje no modal
-- [x] Badge "HOJE" no dia atual
+#### Bebidas (6 opções)
+- Suco de Laranja Natural: R$ 8,00
+- Suco de Maracujá: R$ 7,00
+- Suco de Limão: R$ 6,00
+- Coca-Cola Lata: R$ 6,00
+- Guaraná Lata: R$ 5,00
+- Água Mineral: R$ 3,00
 
-#### Cardápio Semanal
+#### Sobremesas (2 opções)
+- [x] Tortinhas de Mousse de Maracujá com Chocolate: R$ 7,00
+- [x] Pudim de Leite Condensado com Leite Ninho: R$ 6,00
+
+#### Sistema de Pagamento
+- [x] Pix
+- [x] Dinheiro (com campo para troco)
+- [x] Cartão (na entrega)
+
+#### Cardápio Semanal (travado por dia)
 - Segunda: Strogonoff de Frango
 - Terça: Bife Acebolado
 - Quarta: Frango Assado
@@ -45,8 +52,9 @@ Site completo, moderno e profissional para marmitaria "Marmitaria da Xai" em Cam
 - [x] Design estilo iFood (vermelho/branco)
 - [x] Google Maps integrado
 - [x] 100% responsivo (mobile, tablet, desktop)
-- [x] Animações suaves com Framer Motion
-- [x] Botão flutuante WhatsApp abre popup
+- [x] Animações com Framer Motion
+- [x] Dias não disponíveis aparecem travados com cadeado
+- [x] Total calculado automaticamente
 
 ## Stack Técnica
 - Frontend: React + Tailwind CSS + Framer Motion
@@ -54,7 +62,7 @@ Site completo, moderno e profissional para marmitaria "Marmitaria da Xai" em Cam
 - Fontes: Oswald + DM Sans
 
 ## Backlog / Próximas Melhorias
-- [ ] P1: Ajustar preços reais 
-- [ ] P2: Adicionar campo de cupom de desconto
-- [ ] P2: Sistema de notificação de pedido confirmado
+- [ ] P1: Ajustar preços reais das marmitas
+- [ ] P2: Adicionar mais sobremesas
+- [ ] P2: Sistema de cupom de desconto
 - [ ] P3: Histórico de pedidos do cliente
