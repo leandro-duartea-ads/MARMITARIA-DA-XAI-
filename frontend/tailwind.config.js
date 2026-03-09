@@ -9,16 +9,24 @@ module.exports = {
                 sans: ["DM Sans", "sans-serif"],
             },
             colors: {
-                wood: {
-                    dark: "#2B1A0E",
-                    medium: "#3D2410",
-                    footer: "#1A0A00",
-                },
-                gold: {
-                    DEFAULT: "#F5A623",
-                    light: "#F0C060",
-                    hover: "#FFB84D",
-                    dark: "#B87A15",
+                // iFood inspired colors
+                ifood: {
+                    red: "#EA1D2C",
+                    "red-dark": "#C41622",
+                    "red-light": "#FF2B3D",
+                    gray: {
+                        50: "#FAFAFA",
+                        100: "#F5F5F5",
+                        200: "#EEEEEE",
+                        300: "#E0E0E0",
+                        400: "#BDBDBD",
+                        500: "#9E9E9E",
+                        600: "#757575",
+                        700: "#616161",
+                        800: "#424242",
+                        900: "#212121",
+                    },
+                    yellow: "#FFBA00",
                 },
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",

@@ -41,7 +41,7 @@
 
 .menu-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(245, 166, 35, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
 /* Image hover zoom */
@@ -80,35 +80,47 @@
 
 /* Navbar scroll effect */
 .navbar-scrolled {
-    background-color: rgba(43, 26, 14, 0.98) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Step connector line */
-.step-connector {
-    position: relative;
+/* Day selector tabs */
+.day-tab {
+    transition: all 0.3s ease;
 }
 
-.step-connector::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 100%;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, #F5A623, transparent);
-    transform: translateY(-50%);
+.day-tab:hover {
+    background-color: #FEE2E4;
+}
+
+.day-tab.active {
+    background-color: #EA1D2C;
+    color: white;
+}
+
+/* Today badge animation */
+@keyframes today-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.today-badge {
+    animation: today-pulse 2s ease-in-out infinite;
 }
 
 /* Star rating */
 .star-filled {
-    color: #F5A623;
+    color: #FFBA00;
 }
 
 /* Form input focus */
 .form-input:focus {
-    border-color: #F5A623;
-    box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.2);
+    border-color: #EA1D2C;
+    box-shadow: 0 0 0 3px rgba(234, 29, 44, 0.15);
 }
 
 /* Badge animation */
@@ -169,6 +181,13 @@
     left: 20px;
     font-size: 80px;
     font-family: "Oswald", sans-serif;
-    color: rgba(245, 166, 35, 0.2);
+    color: rgba(234, 29, 44, 0.1);
     line-height: 1;
+}
+
+/* Google Maps container */
+.map-container {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
