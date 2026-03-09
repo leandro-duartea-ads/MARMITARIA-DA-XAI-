@@ -1,0 +1,159 @@
+{
+  "identity": {
+    "name": "Marmitaria da Xai",
+    "tone": "Rustic-Modern, Appetizing, Warm, Sophisticated",
+    "target_audience": "Locals in Campo Grande-MS looking for quality homemade food",
+    "keywords": ["Comida Caseira", "Sofisticado", "Rústico", "Sabor", "Qualidade"]
+  },
+  "typography": {
+    "primary": {
+      "name": "Oswald",
+      "usage": "Headings, Menu Item Names, Price Tags",
+      "weights": ["500", "700"],
+      "class": "font-oswald uppercase tracking-wide"
+    },
+    "secondary": {
+      "name": "DM Sans",
+      "usage": "Body Text, Descriptions, Footer",
+      "weights": ["400", "500"],
+      "class": "font-sans leading-relaxed"
+    }
+  },
+  "colors": {
+    "background": {
+      "main": "#2B1A0E",
+      "alt": "#3D2410",
+      "footer": "#1A0A00",
+      "overlay": "rgba(43, 26, 14, 0.85)"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#F0C060",
+      "muted": "#D4C5B5"
+    },
+    "accent": {
+      "primary": "#F5A623",
+      "hover": "#FFB84D",
+      "dark": "#B87A15"
+    },
+    "system": {
+      "border": "rgba(240, 192, 96, 0.2)",
+      "success": "#4CAF50",
+      "error": "#E53935"
+    }
+  },
+  "visual_enhancers": {
+    "shadows": {
+      "card": "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15)",
+      "glow": "0 0 15px rgba(245, 166, 35, 0.15)",
+      "text_shadow": "0 2px 4px rgba(0,0,0,0.5)"
+    },
+    "borders": {
+      "subtle": "1px solid rgba(240, 192, 96, 0.15)",
+      "highlight": "1px solid #F5A623"
+    },
+    "textures": {
+      "noise": "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E\")",
+      "wood_gradient": "linear-gradient(to bottom right, #2B1A0E, #1A0A00)"
+    },
+    "radius": {
+      "sm": "rounded-sm",
+      "md": "rounded-md",
+      "lg": "rounded-lg",
+      "full": "rounded-full"
+    }
+  },
+  "layout_strategy": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "spacing": {
+      "section_padding": "py-20 md:py-32",
+      "element_gap": "gap-6 md:gap-8"
+    },
+    "grid": {
+      "menu": "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8",
+      "features": "grid-cols-1 md:grid-cols-3 gap-8 text-center"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#F5A623] text-[#1A0A00] hover:bg-[#FFB84D] font-bold px-8 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 active:translate-y-0",
+      "secondary": "bg-transparent border-2 border-[#F5A623] text-[#F5A623] hover:bg-[#F5A623] hover:text-[#1A0A00] font-bold px-8 py-3 rounded-full transition-all duration-300",
+      "whatsapp_float": "fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 animate-bounce-subtle"
+    },
+    "cards": {
+      "menu_item": "bg-[#3D2410] border border-[#F0C060]/20 rounded-xl overflow-hidden shadow-lg hover:border-[#F5A623] transition-colors duration-300 group",
+      "testimonial": "bg-[#2B1A0E] border border-[#F0C060]/10 p-8 rounded-2xl relative"
+    },
+    "navbar": "fixed top-0 w-full z-40 bg-[#2B1A0E]/90 backdrop-blur-md border-b border-[#F0C060]/10 transition-all duration-300"
+  },
+  "assets": {
+    "images": {
+      "hero_bg": "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/ij7b4rza_WhatsApp%20Image%202026-03-05%20at%2022.06.19%20%281%29.jpeg",
+      "hero_bg_alt": "https://images.unsplash.com/photo-1706095883120-ab0bd73faee6?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "menu": {
+        "strogonoff_frango": "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/8bla0e5z_WhatsApp%20Image%202026-03-05%20at%2022.06.17.jpeg",
+        "picadinho": "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/ubew9qcb_WhatsApp%20Image%202026-03-05%20at%2022.06.18.jpeg",
+        "marmita_completa": "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/ij7b4rza_WhatsApp%20Image%202026-03-05%20at%2022.06.19%20%281%29.jpeg",
+        "strogonoff_carne": "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/1lvuxqew_WhatsApp%20Image%202026-03-05%20at%2022.06.21%20%281%29.jpeg",
+        "parmegiana": "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/73lcrb6j_WhatsApp%20Image%202026-03-05%20at%2022.06.21.jpeg"
+      },
+      "textures": {
+        "wood_dark": "https://images.unsplash.com/photo-1598902574988-e32182afa9f4?crop=entropy&cs=srgb&fm=jpg&q=85"
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-[#F5A623] stroke-[1.5]"
+    }
+  },
+  "content_strategy": {
+    "hero_headline": "Comida Caseira de Verdade",
+    "hero_subheadline": "O sabor que você ama, no conforto da sua casa ou trabalho. Peça agora sua marmita quentinha.",
+    "cta_main": "Pedir Agora",
+    "cta_secondary": "Ver Cardápio",
+    "menu_sections": ["Destaques", "Tradicionais", "Especiais"]
+  },
+  "animation": {
+    "library": "framer-motion",
+    "presets": {
+      "fade_up": {
+        "initial": { "opacity": 0, "y": 20 },
+        "whileInView": { "opacity": 1, "y": 0 },
+        "viewport": { "once": true },
+        "transition": { "duration": 0.6, "ease": "easeOut" }
+      },
+      "stagger_container": {
+        "hidden": { "opacity": 0 },
+        "show": {
+          "opacity": 1,
+          "transition": {
+            "staggerChildren": 0.1
+          }
+        }
+      }
+    }
+  },
+  "accessibility": {
+    "contrast_check": "Ensure #F0C060 text is only used on dark backgrounds (#2B1A0E). Use #FFFFFF for small body text.",
+    "focus_states": "outline-none ring-2 ring-[#F5A623] ring-offset-2 ring-offset-[#2B1A0E]"
+  },
+  "instructions_to_main_agent": [
+    "Install 'lucide-react' and 'framer-motion' immediately.",
+    "Add Google Fonts 'Oswald' (weights 500,700) and 'DM Sans' (weights 400,500) in index.html or css.",
+    "Configure Tailwind theme colors to match the 'colors' object exactly.",
+    "Create a reusable 'Section' component that handles the alternating backgrounds (#2B1A0E vs #3D2410).",
+    "Use the provided WhatsApp link for all primary CTAs: https://wa.me/5567982017678",
+    "Ensure the Navbar is sticky and changes background opacity on scroll.",
+    "Do NOT use standard HTML <img> tags without styling; always add rounded corners and subtle shadows.",
+    "Implement the 'Menu' section using a responsive grid of cards.",
+    "For the 'How it Works' section, use a 3-step process with Lucide icons (Phone, ChefHat, Bike).",
+    "Use data-testid on all interactive elements (buttons, inputs, links)."
+  ],
+  "universal_guidelines": [
+    "Do not use generic centered layouts everywhere; use asymmetry in the Hero section if possible.",
+    "Use 2-3x more spacing than typical (py-20 instead of py-10).",
+    "Add subtle noise texture overlay to the entire body to give it that 'rustic' paper/material feel.",
+    "Never use gradients for text colors.",
+    "Ensure all images have alt text for accessibility."
+  ]
+}
