@@ -18,34 +18,48 @@ Site completo, moderno e profissional para marmitaria "Marmitaria da Xai" em Cam
 3. **Clientes de feijoada** - Frequentadores aos sábados
 
 ## Core Requirements
-- Identidade visual marrom/dourado (rústico-moderno)
+- Sistema de cardápio que varia por dia da semana
+- Cores estilo iFood (vermelho #EA1D2C e branco)
+- Google Maps integrado
 - Responsivo mobile-first
 - Integração WhatsApp para pedidos
-- Cardápio com 3 tamanhos (P/M/G)
 
-## O Que Foi Implementado (09/03/2026)
-- [x] Navbar fixa com navegação suave
-- [x] Hero Section com destaque para feijoada
-- [x] Barra de Diferenciais (4 itens)
-- [x] Seção de Entrega
-- [x] Cardápio com 6 cards (preços P/M/G)
-- [x] Seção "Como Funciona" (4 passos)
-- [x] Depoimentos (3 cards)
-- [x] Formulário de pedido via WhatsApp
-- [x] Botão flutuante WhatsApp com animação
-- [x] Menu hamburger mobile
-- [x] Footer com Instagram e contato
-- [x] Scroll reveal animations (Framer Motion)
-- [x] Design 100% fiel à identidade visual solicitada
+## O Que Foi Implementado
+
+### Versão 1.0 (09/03/2026)
+- [x] Site completo com design marrom/dourado
+- [x] Cardápio com 6 pratos
+- [x] Formulário WhatsApp
+- [x] Mobile responsivo
+
+### Versão 2.0 (09/03/2026) - ATUAL
+- [x] **Novo design estilo iFood** (vermelho/branco)
+- [x] **Sistema de cardápio por dia da semana**
+  - Segunda: Strogonoff de Frango
+  - Terça: Bife Acebolado
+  - Quarta: Frango Assado
+  - Quinta: Picadinho de Carne
+  - Sexta: Frango à Parmegiana
+  - Sábado: Feijoada da Xai
+- [x] **Auto-detecção do dia atual** com badge "HOJE"
+- [x] **Seletor de dias** para ver cardápio de outros dias
+- [x] **Google Maps embed** na seção de localização
+- [x] **Galeria de fotos** com 4 imagens extras
+- [x] **10 imagens reais** dos pratos fornecidas pelo cliente
+- [x] Navbar responsiva com menu hamburger
+- [x] Formulário com seleção de marmita e tamanho (P/M/G)
+- [x] Botão flutuante WhatsApp
+- [x] Animações com Framer Motion
 
 ## Stack Técnica
 - Frontend: React + Tailwind CSS + Framer Motion
 - Componentes: lucide-react (ícones)
 - Fontes: Oswald + DM Sans (Google Fonts)
+- Maps: Google Maps Embed API
 
 ## Backlog / Próximas Melhorias (P1/P2)
-- [ ] P1: Adicionar seção especial da Feijoada de Sábado
-- [ ] P1: Galeria de fotos expandida
-- [ ] P2: Integração com Google Maps
-- [ ] P2: Sistema de avaliações reais
+- [ ] P1: Ajustar preços reais (atualmente simbólicos)
+- [ ] P1: Adicionar mais fotos de pratos específicos
+- [ ] P2: Sistema de promoções/combos
+- [ ] P2: Integração com sistema de pedidos
 - [ ] P2: Chat bot WhatsApp automatizado
