@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "@/App.css";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone,
   MapPin,
@@ -21,6 +21,15 @@ import {
   Check,
   Calendar,
   MapPinned,
+  Lock,
+  ShoppingBag,
+  Plus,
+  Minus,
+  Coffee,
+  Banknote,
+  QrCode,
+  Wallet,
+  AlertCircle,
 } from "lucide-react";
 
 // WhatsApp SVG Icon
@@ -41,13 +50,12 @@ const BUSINESS = {
   hours: "Seg a Sáb · 10h às 14h",
   instagram: "@_marmitaria_xai_",
   instagramUrl: "https://instagram.com/_marmitaria_xai_",
-  mapsEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3737.8!2d-54.6!3d-20.45!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sRua%20Almirante%20Cochrane%2C%20Campo%20Grande%20-%20MS!5e0!3m2!1spt-BR!2sbr!4v1234567890",
   mapsLink: "https://www.google.com/maps/search/Rua+Almirante+Cochrane,+Campo+Grande+-+MS",
 };
 
 // Days of the week with cardápio (0 = Sunday, 1 = Monday, etc.)
 const WEEKLY_MENU = {
-  1: { // Segunda
+  1: {
     day: "Segunda-feira",
     shortDay: "SEG",
     name: "Strogonoff de Frango",
@@ -55,7 +63,7 @@ const WEEKLY_MENU = {
     image: "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/8bla0e5z_WhatsApp%20Image%202026-03-05%20at%2022.06.17.jpeg",
     prices: { P: 18, M: 22, G: 28 },
   },
-  2: { // Terça
+  2: {
     day: "Terça-feira",
     shortDay: "TER",
     name: "Bife Acebolado",
@@ -63,7 +71,7 @@ const WEEKLY_MENU = {
     image: "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/a7zzflsv_WhatsApp%20Image%202026-03-05%20at%2022.06.24.jpeg",
     prices: { P: 18, M: 22, G: 28 },
   },
-  3: { // Quarta
+  3: {
     day: "Quarta-feira",
     shortDay: "QUA",
     name: "Frango Assado",
@@ -71,7 +79,7 @@ const WEEKLY_MENU = {
     image: "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/neym25av_WhatsApp%20Image%202026-03-05%20at%2022.06.24%20%281%29.jpeg",
     prices: { P: 18, M: 22, G: 28 },
   },
-  4: { // Quinta
+  4: {
     day: "Quinta-feira",
     shortDay: "QUI",
     name: "Picadinho de Carne",
@@ -79,7 +87,7 @@ const WEEKLY_MENU = {
     image: "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/ubew9qcb_WhatsApp%20Image%202026-03-05%20at%2022.06.18.jpeg",
     prices: { P: 18, M: 22, G: 28 },
   },
-  5: { // Sexta
+  5: {
     day: "Sexta-feira",
     shortDay: "SEX",
     name: "Frango à Parmegiana",
@@ -87,7 +95,7 @@ const WEEKLY_MENU = {
     image: "https://customer-assets.emergentagent.com/job_marmitaria-xai/artifacts/73lcrb6j_WhatsApp%20Image%202026-03-05%20at%2022.06.21.jpeg",
     prices: { P: 18, M: 22, G: 28 },
   },
-  6: { // Sábado
+  6: {
     day: "Sábado",
     shortDay: "SÁB",
     name: "Feijoada da Xai",
@@ -97,6 +105,23 @@ const WEEKLY_MENU = {
     special: true,
   },
 };
+
+// Bebidas disponíveis
+const BEVERAGES = [
+  { id: 1, name: "Suco de Laranja Natural", price: 8 },
+  { id: 2, name: "Suco de Maracujá", price: 7 },
+  { id: 3, name: "Suco de Limão", price: 6 },
+  { id: 4, name: "Coca-Cola Lata", price: 6 },
+  { id: 5, name: "Guaraná Lata", price: 5 },
+  { id: 6, name: "Água Mineral", price: 3 },
+];
+
+// Formas de pagamento
+const PAYMENT_METHODS = [
+  { id: "pix", name: "Pix", icon: QrCode },
+  { id: "dinheiro", name: "Dinheiro", icon: Banknote },
+  { id: "cartao", name: "Cartão (na entrega)", icon: CreditCard },
+];
 
 // Gallery images
 const GALLERY_IMAGES = [
@@ -168,12 +193,452 @@ const staggerContainer = {
 // Get current day
 const getCurrentDay = () => {
   const day = new Date().getDay();
-  // Se for domingo (0), mostrar segunda (1)
-  return day === 0 ? 1 : day;
+  return day === 0 ? 1 : day; // Se for domingo, mostra segunda
+};
+
+// Order Popup Component
+const OrderPopup = ({ isOpen, onClose, todayMenu }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    reference: "",
+    size: "M",
+    quantity: 1,
+    beverages: [],
+    paymentMethod: "pix",
+    change: "",
+    notes: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleBeverageToggle = (beverage) => {
+    const exists = formData.beverages.find(b => b.id === beverage.id);
+    if (exists) {
+      setFormData({
+        ...formData,
+        beverages: formData.beverages.filter(b => b.id !== beverage.id)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        beverages: [...formData.beverages, { ...beverage, qty: 1 }]
+      });
+    }
+  };
+
+  const updateBeverageQty = (id, delta) => {
+    setFormData({
+      ...formData,
+      beverages: formData.beverages.map(b => 
+        b.id === id ? { ...b, qty: Math.max(1, b.qty + delta) } : b
+      )
+    });
+  };
+
+  const calculateTotal = () => {
+    const marmitaPrice = todayMenu.prices[formData.size] * formData.quantity;
+    const beveragesPrice = formData.beverages.reduce((acc, b) => acc + (b.price * b.qty), 0);
+    return marmitaPrice + beveragesPrice;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    let message = `*🍽️ NOVO PEDIDO - Marmitaria da Xai*%0A%0A`;
+    message += `👤 *Cliente:* ${formData.name}%0A`;
+    message += `📱 *Telefone:* ${formData.phone}%0A`;
+    message += `📍 *Endereço:* ${formData.address}%0A`;
+    if (formData.reference) {
+      message += `🏠 *Ponto de Referência:* ${formData.reference}%0A`;
+    }
+    message += `%0A`;
+    message += `*━━━ PEDIDO ━━━*%0A`;
+    message += `🍱 *${todayMenu.name}*%0A`;
+    message += `   Tamanho: ${formData.size} | Qtd: ${formData.quantity}%0A`;
+    message += `   R$ ${(todayMenu.prices[formData.size] * formData.quantity).toFixed(2)}%0A`;
+    
+    if (formData.beverages.length > 0) {
+      message += `%0A🥤 *Bebidas:*%0A`;
+      formData.beverages.forEach(b => {
+        message += `   ${b.name} x${b.qty} - R$ ${(b.price * b.qty).toFixed(2)}%0A`;
+      });
+    }
+    
+    message += `%0A*━━━━━━━━━━━━━━━*%0A`;
+    message += `💰 *TOTAL: R$ ${calculateTotal().toFixed(2)}*%0A`;
+    message += `%0A`;
+    message += `💳 *Pagamento:* ${PAYMENT_METHODS.find(p => p.id === formData.paymentMethod)?.name}%0A`;
+    
+    if (formData.paymentMethod === "dinheiro" && formData.change) {
+      message += `💵 *Troco para:* R$ ${formData.change}%0A`;
+    }
+    
+    if (formData.notes) {
+      message += `%0A📝 *Observações:* ${formData.notes}`;
+    }
+    
+    window.open(`${BUSINESS.whatsapp}?text=${message}`, "_blank");
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+          data-testid="order-popup"
+        >
+          {/* Header */}
+          <div className="sticky top-0 bg-ifood-red text-white p-4 sm:p-6 rounded-t-3xl z-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <ShoppingBag className="w-6 h-6" />
+                <h2 className="font-oswald text-xl sm:text-2xl font-bold">FAZER PEDIDO</h2>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                data-testid="close-popup-btn"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <p className="text-white/80 text-sm mt-2">Cardápio de hoje: {todayMenu.name}</p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5">
+            {/* Dados pessoais */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-ifood-gray-900 flex items-center gap-2">
+                <div className="w-6 h-6 bg-ifood-red text-white rounded-full flex items-center justify-center text-sm">1</div>
+                Seus Dados
+              </h3>
+              
+              <div>
+                <label className="block text-sm font-medium text-ifood-gray-700 mb-1">Nome *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-ifood-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-red focus:border-transparent transition-all"
+                  placeholder="Seu nome completo"
+                  data-testid="popup-input-name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ifood-gray-700 mb-1">WhatsApp *</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-ifood-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-red focus:border-transparent transition-all"
+                  placeholder="(67) 99999-9999"
+                  data-testid="popup-input-phone"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ifood-gray-700 mb-1">Endereço de Entrega *</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-ifood-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-red focus:border-transparent transition-all"
+                  placeholder="Rua, número, bairro"
+                  data-testid="popup-input-address"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-ifood-gray-700 mb-1">Ponto de Referência</label>
+                <input
+                  type="text"
+                  name="reference"
+                  value={formData.reference}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-ifood-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-red focus:border-transparent transition-all"
+                  placeholder="Ex: Próximo ao mercado, casa azul..."
+                  data-testid="popup-input-reference"
+                />
+              </div>
+            </div>
+
+            {/* Marmita */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-ifood-gray-900 flex items-center gap-2">
+                <div className="w-6 h-6 bg-ifood-red text-white rounded-full flex items-center justify-center text-sm">2</div>
+                Sua Marmita
+              </h3>
+
+              <div className="bg-ifood-gray-50 p-4 rounded-xl">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={todayMenu.image}
+                    alt={todayMenu.name}
+                    className="w-20 h-20 rounded-xl object-cover"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-bold text-ifood-gray-900">{todayMenu.name}</h4>
+                    <p className="text-sm text-ifood-gray-600">{todayMenu.day}</p>
+                  </div>
+                </div>
+
+                {/* Tamanho */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-ifood-gray-700 mb-2">Tamanho</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries(todayMenu.prices).map(([size, price]) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, size })}
+                        className={`p-3 rounded-xl border-2 transition-all ${
+                          formData.size === size
+                            ? "border-ifood-red bg-ifood-red/5"
+                            : "border-ifood-gray-200 hover:border-ifood-gray-300"
+                        }`}
+                        data-testid={`size-btn-${size}`}
+                      >
+                        <span className="block font-bold text-ifood-gray-900">{size}</span>
+                        <span className="block text-ifood-red font-bold">R${price}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quantidade */}
+                <div className="mt-4 flex items-center justify-between">
+                  <label className="text-sm font-medium text-ifood-gray-700">Quantidade</label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, quantity: Math.max(1, formData.quantity - 1) })}
+                      className="w-10 h-10 rounded-full border-2 border-ifood-gray-300 flex items-center justify-center hover:border-ifood-red transition-colors"
+                      data-testid="qty-minus-btn"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-8 text-center font-bold text-lg">{formData.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, quantity: formData.quantity + 1 })}
+                      className="w-10 h-10 rounded-full border-2 border-ifood-red bg-ifood-red text-white flex items-center justify-center hover:bg-ifood-red-dark transition-colors"
+                      data-testid="qty-plus-btn"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bebidas */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-ifood-gray-900 flex items-center gap-2">
+                <div className="w-6 h-6 bg-ifood-red text-white rounded-full flex items-center justify-center text-sm">3</div>
+                Adicionar Bebida?
+                <span className="text-sm font-normal text-ifood-gray-500">(opcional)</span>
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {BEVERAGES.map((beverage) => {
+                  const selected = formData.beverages.find(b => b.id === beverage.id);
+                  return (
+                    <div
+                      key={beverage.id}
+                      className={`p-3 rounded-xl border-2 transition-all cursor-pointer ${
+                        selected
+                          ? "border-ifood-red bg-ifood-red/5"
+                          : "border-ifood-gray-200 hover:border-ifood-gray-300"
+                      }`}
+                      onClick={() => handleBeverageToggle(beverage)}
+                      data-testid={`beverage-${beverage.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Coffee className="w-4 h-4 text-ifood-gray-500" />
+                          <span className="text-sm font-medium">{beverage.name}</span>
+                        </div>
+                        <span className="text-ifood-red font-bold text-sm">R${beverage.price}</span>
+                      </div>
+                      {selected && (
+                        <div className="flex items-center justify-end gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); updateBeverageQty(beverage.id, -1); }}
+                            className="w-6 h-6 rounded-full border border-ifood-gray-300 flex items-center justify-center"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm font-bold">{selected.qty}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); updateBeverageQty(beverage.id, 1); }}
+                            className="w-6 h-6 rounded-full bg-ifood-red text-white flex items-center justify-center"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Pagamento */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-ifood-gray-900 flex items-center gap-2">
+                <div className="w-6 h-6 bg-ifood-red text-white rounded-full flex items-center justify-center text-sm">4</div>
+                Forma de Pagamento
+              </h3>
+
+              <div className="grid grid-cols-3 gap-2">
+                {PAYMENT_METHODS.map((method) => (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, paymentMethod: method.id, change: "" })}
+                    className={`p-3 rounded-xl border-2 transition-all ${
+                      formData.paymentMethod === method.id
+                        ? "border-ifood-red bg-ifood-red/5"
+                        : "border-ifood-gray-200 hover:border-ifood-gray-300"
+                    }`}
+                    data-testid={`payment-${method.id}`}
+                  >
+                    <method.icon className="w-5 h-5 mx-auto mb-1 text-ifood-gray-700" />
+                    <span className="block text-xs font-medium">{method.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              {formData.paymentMethod === "dinheiro" && (
+                <div>
+                  <label className="block text-sm font-medium text-ifood-gray-700 mb-1">Troco para quanto?</label>
+                  <input
+                    type="text"
+                    name="change"
+                    value={formData.change}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-ifood-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-red focus:border-transparent transition-all"
+                    placeholder="Ex: R$ 50,00"
+                    data-testid="popup-input-change"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Observações */}
+            <div>
+              <label className="block text-sm font-medium text-ifood-gray-700 mb-1">Observações</label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows={2}
+                className="w-full px-4 py-3 border border-ifood-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-red focus:border-transparent transition-all resize-none"
+                placeholder="Ex: Sem cebola, bem passado..."
+                data-testid="popup-textarea-notes"
+              />
+            </div>
+
+            {/* Total e Submit */}
+            <div className="sticky bottom-0 bg-white pt-4 border-t border-ifood-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-lg font-medium text-ifood-gray-700">Total do Pedido:</span>
+                <span className="text-2xl font-bold text-ifood-red">R$ {calculateTotal().toFixed(2)}</span>
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white font-bold py-4 rounded-full hover:bg-[#1da851] transition-all shadow-lg"
+                data-testid="popup-submit-btn"
+              >
+                <WhatsAppIcon className="w-6 h-6" />
+                Enviar Pedido pelo WhatsApp
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+// Day Locked Modal
+const DayLockedModal = ({ isOpen, onClose, clickedDay, todayMenu }) => {
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className="bg-white rounded-2xl w-full max-w-sm p-6 text-center shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+          data-testid="day-locked-modal"
+        >
+          <div className="w-16 h-16 bg-ifood-red/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8 text-ifood-red" />
+          </div>
+          <h3 className="font-oswald text-xl font-bold text-ifood-gray-900 mb-2">
+            CARDÁPIO INDISPONÍVEL
+          </h3>
+          <p className="text-ifood-gray-600 mb-4">
+            O cardápio de <strong>{WEEKLY_MENU[clickedDay]?.day}</strong> ({WEEKLY_MENU[clickedDay]?.name}) só está disponível nesse dia.
+          </p>
+          <div className="bg-ifood-gray-50 rounded-xl p-4 mb-6">
+            <p className="text-sm text-ifood-gray-500 mb-1">Cardápio de hoje:</p>
+            <p className="font-bold text-ifood-red text-lg">{todayMenu.name}</p>
+            <p className="text-sm text-ifood-gray-600">{todayMenu.day}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-full bg-ifood-red text-white font-bold py-3 rounded-full hover:bg-ifood-red-dark transition-colors"
+            data-testid="close-locked-modal-btn"
+          >
+            Entendi!
+          </button>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
 };
 
 // Navbar Component
-const Navbar = () => {
+const Navbar = ({ onOrderClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -205,13 +670,13 @@ const Navbar = () => {
             <div className="w-10 h-10 bg-ifood-red rounded-full flex items-center justify-center">
               <ChefHat className="w-6 h-6 text-white" />
             </div>
-            <span className="font-oswald text-xl md:text-2xl text-ifood-gray-900 font-bold tracking-wide">
+            <span className="font-oswald text-lg sm:text-xl md:text-2xl text-ifood-gray-900 font-bold tracking-wide">
               Marmitaria da <span className="text-ifood-red">Xai</span>
             </span>
           </a>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -222,22 +687,20 @@ const Navbar = () => {
                 {link.label}
               </a>
             ))}
-            <a
-              href={BUSINESS.whatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={onOrderClick}
               className="btn-primary bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-6 py-2.5 rounded-full transition-all duration-300 flex items-center gap-2"
               data-testid="nav-order-btn"
             >
-              <WhatsAppIcon className="w-4 h-4" />
+              <ShoppingBag className="w-4 h-4" />
               Pedir Agora
-            </a>
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-ifood-gray-700"
+            className="lg:hidden p-2 text-ifood-gray-700"
             data-testid="mobile-menu-btn"
             aria-label="Menu"
           >
@@ -248,7 +711,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 transition-all duration-300 ${
+        className={`lg:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 transition-all duration-300 ${
           isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
         data-testid="mobile-menu"
@@ -264,14 +727,12 @@ const Navbar = () => {
               {link.label}
             </a>
           ))}
-          <a
-            href={BUSINESS.whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block text-center bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-6 py-3 rounded-full transition-all duration-300"
+          <button
+            onClick={() => { setIsMobileMenuOpen(false); onOrderClick(); }}
+            className="w-full text-center bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-6 py-3 rounded-full transition-all duration-300"
           >
             Pedir Agora
-          </a>
+          </button>
         </div>
       </div>
     </nav>
@@ -279,38 +740,38 @@ const Navbar = () => {
 };
 
 // Hero Section with Today's Menu
-const HeroSection = () => {
+const HeroSection = ({ onOrderClick }) => {
   const today = getCurrentDay();
   const todayMenu = WEEKLY_MENU[today];
 
   return (
     <section data-testid="hero-section" className="relative min-h-screen bg-gradient-to-br from-ifood-gray-50 to-white pt-20 md:pt-0 flex items-center overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-20">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Text Content */}
-          <motion.div {...fadeInUp} className="text-center md:text-left">
+          <motion.div {...fadeInUp} className="text-center md:text-left order-2 md:order-1">
             {/* Today Badge */}
-            <div className="inline-flex items-center gap-2 bg-ifood-red/10 text-ifood-red px-4 py-2 rounded-full mb-6 today-badge">
+            <div className="inline-flex items-center gap-2 bg-ifood-red/10 text-ifood-red px-4 py-2 rounded-full mb-4 md:mb-6 today-badge">
               <Calendar className="w-4 h-4" />
               <span className="font-bold text-sm">{todayMenu.day.toUpperCase()}</span>
             </div>
 
-            <h1 className="font-oswald text-4xl sm:text-5xl lg:text-6xl font-bold text-ifood-gray-900 mb-4">
+            <h1 className="font-oswald text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-ifood-gray-900 mb-3 md:mb-4">
               CARDÁPIO DE <span className="text-ifood-red">HOJE</span>
             </h1>
-            <h2 className="font-oswald text-2xl sm:text-3xl text-ifood-red mb-4">
+            <h2 className="font-oswald text-xl sm:text-2xl lg:text-3xl text-ifood-red mb-3 md:mb-4">
               {todayMenu.name}
             </h2>
-            <p className="text-lg text-ifood-gray-600 mb-6 max-w-lg">
+            <p className="text-base lg:text-lg text-ifood-gray-600 mb-4 md:mb-6 max-w-lg mx-auto md:mx-0">
               {todayMenu.description}
             </p>
 
             {/* Prices */}
-            <div className="flex justify-center md:justify-start gap-4 mb-8">
+            <div className="flex justify-center md:justify-start gap-3 md:gap-4 mb-6 md:mb-8">
               {Object.entries(todayMenu.prices).map(([size, price]) => (
-                <div key={size} className="bg-white rounded-xl shadow-md px-6 py-4 text-center">
-                  <span className="block text-sm text-ifood-gray-500 uppercase font-medium">{size}</span>
-                  <span className="font-oswald text-2xl text-ifood-red font-bold">R${price}</span>
+                <div key={size} className="bg-white rounded-xl shadow-md px-4 sm:px-6 py-3 sm:py-4 text-center">
+                  <span className="block text-xs sm:text-sm text-ifood-gray-500 uppercase font-medium">{size}</span>
+                  <span className="font-oswald text-xl sm:text-2xl text-ifood-red font-bold">R${price}</span>
                 </div>
               ))}
             </div>
@@ -320,33 +781,31 @@ const HeroSection = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className="inline-flex items-center gap-3 bg-ifood-red text-white px-6 py-3 rounded-lg mb-8"
+              className="inline-flex items-center gap-3 bg-ifood-red text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg mb-6 md:mb-8"
             >
-              <Bike className="w-6 h-6" />
-              <span className="font-bold">ENTREGA GRÁTIS na região!</span>
+              <Bike className="w-5 h-5 sm:w-6 sm:h-6" />
+              <span className="font-bold text-sm sm:text-base">ENTREGA GRÁTIS na região!</span>
             </motion.div>
 
             {/* Hours */}
-            <div className="flex items-center justify-center md:justify-start gap-2 text-ifood-gray-600 mb-8">
+            <div className="flex items-center justify-center md:justify-start gap-2 text-ifood-gray-600 mb-6 md:mb-8">
               <Clock className="w-5 h-5 text-ifood-red" />
-              <span>{BUSINESS.hours}</span>
+              <span className="text-sm sm:text-base">{BUSINESS.hours}</span>
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <a
-                href={`${BUSINESS.whatsapp}?text=Olá! Gostaria de pedir a marmita de hoje: ${todayMenu.name}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary inline-flex items-center justify-center gap-2 bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
-                data-testid="hero-whatsapp-btn"
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center md:justify-start">
+              <button
+                onClick={onOrderClick}
+                className="btn-primary inline-flex items-center justify-center gap-2 bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
+                data-testid="hero-order-btn"
               >
-                <WhatsAppIcon className="w-5 h-5" />
-                Pedir pelo WhatsApp
-              </a>
+                <ShoppingBag className="w-5 h-5" />
+                Fazer Pedido
+              </button>
               <a
                 href="#cardapio"
-                className="inline-flex items-center justify-center gap-2 border-2 border-ifood-red text-ifood-red hover:bg-ifood-red hover:text-white font-bold px-8 py-4 rounded-full transition-all duration-300"
+                className="inline-flex items-center justify-center gap-2 border-2 border-ifood-red text-ifood-red hover:bg-ifood-red hover:text-white font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300"
                 data-testid="hero-menu-btn"
               >
                 Ver Cardápio da Semana
@@ -360,16 +819,16 @@ const HeroSection = () => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative"
+            className="relative order-1 md:order-2"
           >
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+            <div className="relative rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl">
               <img
                 src={todayMenu.image}
                 alt={todayMenu.name}
-                className="w-full h-[400px] md:h-[500px] object-cover"
+                className="w-full h-[250px] sm:h-[350px] md:h-[400px] lg:h-[500px] object-cover"
               />
               {todayMenu.special && (
-                <div className="absolute top-4 right-4 bg-ifood-yellow text-ifood-gray-900 font-bold px-4 py-2 rounded-full shadow-lg">
+                <div className="absolute top-4 right-4 bg-ifood-yellow text-ifood-gray-900 font-bold px-3 sm:px-4 py-1 sm:py-2 rounded-full shadow-lg text-sm">
                   ESPECIAL DO DIA
                 </div>
               )}
@@ -391,9 +850,9 @@ const FeaturesBar = () => {
   ];
 
   return (
-    <section data-testid="features-bar" className="bg-ifood-red py-6">
+    <section data-testid="features-bar" className="bg-ifood-red py-4 sm:py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           {features.map((feature, index) => (
             <motion.div
               key={index}
@@ -401,10 +860,10 @@ const FeaturesBar = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center justify-center gap-3 text-white"
+              className="flex items-center justify-center gap-2 sm:gap-3 text-white"
             >
-              <feature.icon className="w-6 h-6 flex-shrink-0" />
-              <span className="font-bold text-sm md:text-base">{feature.text}</span>
+              <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+              <span className="font-bold text-xs sm:text-sm md:text-base">{feature.text}</span>
             </motion.div>
           ))}
         </div>
@@ -414,121 +873,169 @@ const FeaturesBar = () => {
 };
 
 // Weekly Menu Section
-const WeeklyMenuSection = () => {
-  const [selectedDay, setSelectedDay] = useState(getCurrentDay());
+const WeeklyMenuSection = ({ onOrderClick }) => {
   const currentDay = getCurrentDay();
+  const todayMenu = WEEKLY_MENU[currentDay];
+  const [lockedModalOpen, setLockedModalOpen] = useState(false);
+  const [clickedDay, setClickedDay] = useState(null);
 
-  const days = [1, 2, 3, 4, 5, 6]; // Segunda a Sábado
+  const days = [1, 2, 3, 4, 5, 6];
+
+  const handleDayClick = (day) => {
+    if (day !== currentDay) {
+      setClickedDay(day);
+      setLockedModalOpen(true);
+    }
+  };
 
   return (
-    <section id="cardapio" data-testid="menu-section" className="bg-white py-20 md:py-32">
+    <section id="cardapio" data-testid="menu-section" className="bg-white py-16 md:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div {...fadeInUp} className="text-center mb-12">
-          <h2 className="font-oswald text-3xl sm:text-4xl lg:text-5xl font-bold text-ifood-gray-900 mb-4">
+        <motion.div {...fadeInUp} className="text-center mb-8 md:mb-12">
+          <h2 className="font-oswald text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-ifood-gray-900 mb-3 md:mb-4">
             CARDÁPIO DA <span className="text-ifood-red">SEMANA</span>
           </h2>
-          <p className="text-ifood-gray-600 text-lg max-w-2xl mx-auto">
-            Cada dia um prato especial diferente! Clique no dia para ver o cardápio.
+          <p className="text-ifood-gray-600 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto">
+            Cada dia um prato especial diferente! Pedidos apenas para o cardápio do dia.
           </p>
         </motion.div>
 
-        {/* Day Selector */}
-        <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-12">
-          {days.map((day) => (
-            <button
-              key={day}
-              onClick={() => setSelectedDay(day)}
-              className={`day-tab px-4 md:px-6 py-3 rounded-full font-bold text-sm md:text-base transition-all duration-300 ${
-                selectedDay === day
-                  ? "active bg-ifood-red text-white"
-                  : "bg-ifood-gray-100 text-ifood-gray-700 hover:bg-ifood-gray-200"
-              } ${currentDay === day ? "ring-2 ring-ifood-red ring-offset-2" : ""}`}
-              data-testid={`day-btn-${day}`}
-            >
-              {WEEKLY_MENU[day].shortDay}
-              {currentDay === day && (
-                <span className="ml-2 text-xs bg-white text-ifood-red px-2 py-0.5 rounded-full">HOJE</span>
-              )}
-            </button>
-          ))}
+        {/* Day Selector - Locked */}
+        <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-12">
+          {days.map((day) => {
+            const isToday = day === currentDay;
+            return (
+              <button
+                key={day}
+                onClick={() => handleDayClick(day)}
+                className={`relative px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-full font-bold text-xs sm:text-sm md:text-base transition-all duration-300 ${
+                  isToday
+                    ? "bg-ifood-red text-white shadow-lg"
+                    : "bg-ifood-gray-100 text-ifood-gray-400 cursor-not-allowed"
+                }`}
+                data-testid={`day-btn-${day}`}
+              >
+                <span className="flex items-center gap-1 sm:gap-2">
+                  {!isToday && <Lock className="w-3 h-3 sm:w-4 sm:h-4" />}
+                  {WEEKLY_MENU[day].shortDay}
+                  {isToday && (
+                    <span className="ml-1 sm:ml-2 text-[10px] sm:text-xs bg-white text-ifood-red px-1.5 sm:px-2 py-0.5 rounded-full">HOJE</span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Selected Day Menu */}
+        {/* Today's Menu Card */}
         <motion.div
-          key={selectedDay}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="max-w-4xl mx-auto"
         >
-          <div className="bg-ifood-gray-50 rounded-3xl overflow-hidden shadow-xl">
+          <div className="bg-ifood-gray-50 rounded-2xl md:rounded-3xl overflow-hidden shadow-xl">
             <div className="grid md:grid-cols-2">
               {/* Image */}
-              <div className="relative h-64 md:h-auto">
+              <div className="relative h-48 sm:h-64 md:h-auto">
                 <img
-                  src={WEEKLY_MENU[selectedDay].image}
-                  alt={WEEKLY_MENU[selectedDay].name}
+                  src={todayMenu.image}
+                  alt={todayMenu.name}
                   className="w-full h-full object-cover"
                 />
-                {WEEKLY_MENU[selectedDay].special && (
-                  <div className="absolute top-4 left-4 bg-ifood-yellow text-ifood-gray-900 font-bold px-4 py-2 rounded-full">
+                {todayMenu.special && (
+                  <div className="absolute top-4 left-4 bg-ifood-yellow text-ifood-gray-900 font-bold px-3 sm:px-4 py-1 sm:py-2 rounded-full text-sm">
                     ESPECIAL
                   </div>
                 )}
+                <div className="absolute top-4 right-4 bg-ifood-red text-white font-bold px-3 sm:px-4 py-1 sm:py-2 rounded-full text-sm">
+                  DISPONÍVEL HOJE
+                </div>
               </div>
 
               {/* Content */}
-              <div className="p-8 md:p-12 flex flex-col justify-center">
+              <div className="p-6 sm:p-8 md:p-12 flex flex-col justify-center">
                 <span className="text-ifood-red font-bold text-sm mb-2">
-                  {WEEKLY_MENU[selectedDay].day.toUpperCase()}
+                  {todayMenu.day.toUpperCase()}
                 </span>
-                <h3 className="font-oswald text-3xl font-bold text-ifood-gray-900 mb-4">
-                  {WEEKLY_MENU[selectedDay].name}
+                <h3 className="font-oswald text-2xl sm:text-3xl font-bold text-ifood-gray-900 mb-3 md:mb-4">
+                  {todayMenu.name}
                 </h3>
-                <p className="text-ifood-gray-600 mb-6">
-                  {WEEKLY_MENU[selectedDay].description}
+                <p className="text-ifood-gray-600 mb-4 md:mb-6 text-sm sm:text-base">
+                  {todayMenu.description}
                 </p>
 
                 {/* Prices */}
-                <div className="flex gap-4 mb-8">
-                  {Object.entries(WEEKLY_MENU[selectedDay].prices).map(([size, price]) => (
+                <div className="flex gap-3 sm:gap-4 mb-6 md:mb-8">
+                  {Object.entries(todayMenu.prices).map(([size, price]) => (
                     <div key={size} className="text-center">
                       <span className="block text-xs text-ifood-gray-500 uppercase">{size}</span>
-                      <span className="font-oswald text-2xl text-ifood-red font-bold">R${price}</span>
+                      <span className="font-oswald text-xl sm:text-2xl text-ifood-red font-bold">R${price}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Order Button */}
-                <a
-                  href={`${BUSINESS.whatsapp}?text=Olá! Gostaria de pedir: ${WEEKLY_MENU[selectedDay].name} (${WEEKLY_MENU[selectedDay].day})`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary inline-flex items-center justify-center gap-2 bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-8 py-4 rounded-full transition-all duration-300"
-                  data-testid={`order-btn-day-${selectedDay}`}
+                <button
+                  onClick={onOrderClick}
+                  className="btn-primary inline-flex items-center justify-center gap-2 bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300"
+                  data-testid="menu-order-btn"
                 >
-                  <WhatsAppIcon className="w-5 h-5" />
+                  <ShoppingBag className="w-5 h-5" />
                   Pedir Agora
-                </a>
+                </button>
               </div>
             </div>
           </div>
         </motion.div>
 
+        {/* Other days preview */}
+        <div className="mt-8 md:mt-12">
+          <h3 className="text-center font-oswald text-lg sm:text-xl text-ifood-gray-500 mb-4 md:mb-6">Cardápio dos outros dias</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+            {days.filter(d => d !== currentDay).map((day) => (
+              <div
+                key={day}
+                className="bg-ifood-gray-100 rounded-xl p-3 sm:p-4 opacity-60 relative overflow-hidden"
+                data-testid={`preview-day-${day}`}
+              >
+                <div className="absolute inset-0 flex items-center justify-center bg-ifood-gray-900/20 z-10">
+                  <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-ifood-gray-600" />
+                </div>
+                <img
+                  src={WEEKLY_MENU[day].image}
+                  alt={WEEKLY_MENU[day].name}
+                  className="w-full h-20 sm:h-24 object-cover rounded-lg mb-2 grayscale"
+                />
+                <p className="text-xs font-bold text-ifood-gray-500">{WEEKLY_MENU[day].shortDay}</p>
+                <p className="text-xs sm:text-sm font-medium text-ifood-gray-700 truncate">{WEEKLY_MENU[day].name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* View Full Menu CTA */}
-        <motion.div {...fadeInUp} className="text-center mt-12">
+        <motion.div {...fadeInUp} className="text-center mt-8 md:mt-12">
           <a
             href={BUSINESS.store}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-ifood-red hover:text-ifood-red-dark font-bold transition-colors"
+            className="inline-flex items-center gap-2 text-ifood-red hover:text-ifood-red-dark font-bold transition-colors text-sm sm:text-base"
             data-testid="view-full-menu-btn"
           >
-            <ExternalLink className="w-5 h-5" />
+            <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
             Ver Cardápio Completo na Loja Online
           </a>
         </motion.div>
       </div>
+
+      {/* Locked Day Modal */}
+      <DayLockedModal
+        isOpen={lockedModalOpen}
+        onClose={() => setLockedModalOpen(false)}
+        clickedDay={clickedDay}
+        todayMenu={todayMenu}
+      />
     </section>
   );
 };
@@ -536,16 +1043,16 @@ const WeeklyMenuSection = () => {
 // Gallery Section
 const GallerySection = () => {
   return (
-    <section className="bg-ifood-gray-50 py-16">
+    <section className="bg-ifood-gray-50 py-12 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div {...fadeInUp} className="text-center mb-10">
-          <h2 className="font-oswald text-2xl sm:text-3xl font-bold text-ifood-gray-900 mb-2">
+        <motion.div {...fadeInUp} className="text-center mb-8 md:mb-10">
+          <h2 className="font-oswald text-xl sm:text-2xl md:text-3xl font-bold text-ifood-gray-900 mb-2">
             NOSSAS <span className="text-ifood-red">MARMITAS</span>
           </h2>
-          <p className="text-ifood-gray-600">Feitas com carinho todos os dias</p>
+          <p className="text-ifood-gray-600 text-sm sm:text-base">Feitas com carinho todos os dias</p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {GALLERY_IMAGES.map((img, index) => (
             <motion.div
               key={index}
@@ -553,12 +1060,12 @@ const GallerySection = () => {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="img-zoom rounded-2xl overflow-hidden shadow-lg"
+              className="img-zoom rounded-xl md:rounded-2xl overflow-hidden shadow-lg"
             >
               <img
                 src={img.src}
                 alt={img.alt}
-                className="w-full h-40 md:h-48 object-cover"
+                className="w-full h-32 sm:h-40 md:h-48 object-cover"
               />
             </motion.div>
           ))}
@@ -569,7 +1076,7 @@ const GallerySection = () => {
 };
 
 // Delivery Section
-const DeliverySection = () => {
+const DeliverySection = ({ onOrderClick }) => {
   const deliveryFeatures = [
     { icon: Bike, title: "Delivery Rápido", description: "Entregamos em toda região" },
     { icon: Store, title: "Retirada no Local", description: "Pegue sua marmita fresquinha" },
@@ -577,19 +1084,19 @@ const DeliverySection = () => {
   ];
 
   return (
-    <section id="entrega" data-testid="delivery-section" className="bg-white py-20 md:py-32">
+    <section id="entrega" data-testid="delivery-section" className="bg-white py-16 md:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Text Content */}
           <motion.div {...fadeInUp}>
-            <h2 className="font-oswald text-3xl sm:text-4xl lg:text-5xl font-bold text-ifood-gray-900 mb-6">
+            <h2 className="font-oswald text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-ifood-gray-900 mb-4 md:mb-6">
               ENTREGAMOS NA <span className="text-ifood-red">SUA PORTA!</span>
             </h2>
-            <p className="text-lg text-ifood-gray-600 mb-10">
+            <p className="text-base lg:text-lg text-ifood-gray-600 mb-8 md:mb-10">
               Peça pelo WhatsApp ou pela nossa loja online. Entrega grátis na região de Campo Grande!
             </p>
 
-            <div className="grid gap-6 mb-10">
+            <div className="grid gap-4 md:gap-6 mb-8 md:mb-10">
               {deliveryFeatures.map((feature, index) => (
                 <motion.div
                   key={index}
@@ -597,29 +1104,27 @@ const DeliverySection = () => {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex items-start gap-4"
+                  className="flex items-start gap-3 md:gap-4"
                 >
-                  <div className="p-3 bg-ifood-red/10 rounded-xl">
-                    <feature.icon className="w-6 h-6 text-ifood-red" />
+                  <div className="p-2 sm:p-3 bg-ifood-red/10 rounded-xl">
+                    <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-ifood-red" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-ifood-gray-900 text-lg">{feature.title}</h3>
-                    <p className="text-ifood-gray-600">{feature.description}</p>
+                    <h3 className="font-bold text-ifood-gray-900 text-base sm:text-lg">{feature.title}</h3>
+                    <p className="text-ifood-gray-600 text-sm sm:text-base">{feature.description}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            <a
-              href={BUSINESS.whatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary inline-flex items-center gap-2 bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
-              data-testid="delivery-whatsapp-btn"
+            <button
+              onClick={onOrderClick}
+              className="btn-primary inline-flex items-center gap-2 bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
+              data-testid="delivery-order-btn"
             >
-              <WhatsAppIcon className="w-5 h-5" />
+              <ShoppingBag className="w-5 h-5" />
               Pedir Agora
-            </a>
+            </button>
           </motion.div>
 
           {/* Image */}
@@ -630,11 +1135,11 @@ const DeliverySection = () => {
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <div className="rounded-3xl overflow-hidden shadow-2xl">
+            <div className="rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1526367790999-0150786686a2?w=600&q=80"
                 alt="Entrega de marmitas"
-                className="w-full h-[400px] object-cover"
+                className="w-full h-[250px] sm:h-[350px] md:h-[400px] object-cover"
               />
             </div>
           </motion.div>
@@ -647,16 +1152,16 @@ const DeliverySection = () => {
 // How It Works Section
 const HowItWorksSection = () => {
   return (
-    <section id="como-funciona" data-testid="how-it-works-section" className="bg-ifood-gray-50 py-20 md:py-32">
+    <section id="como-funciona" data-testid="how-it-works-section" className="bg-ifood-gray-50 py-16 md:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div {...fadeInUp} className="text-center mb-16">
-          <h2 className="font-oswald text-3xl sm:text-4xl lg:text-5xl font-bold text-ifood-gray-900 mb-4">
+        <motion.div {...fadeInUp} className="text-center mb-12 md:mb-16">
+          <h2 className="font-oswald text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-ifood-gray-900 mb-3 md:mb-4">
             COMO <span className="text-ifood-red">FUNCIONA</span>
           </h2>
-          <p className="text-ifood-gray-600 text-lg">Pedir sua marmita é simples e rápido!</p>
+          <p className="text-ifood-gray-600 text-sm sm:text-base lg:text-lg">Pedir sua marmita é simples e rápido!</p>
         </motion.div>
 
-        <div className="grid md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
           {STEPS.map((step, index) => (
             <motion.div
               key={index}
@@ -667,17 +1172,12 @@ const HowItWorksSection = () => {
               className="text-center relative"
               data-testid={`step-${index + 1}`}
             >
-              {/* Connector line */}
-              {index < STEPS.length - 1 && (
-                <div className="hidden md:block absolute top-10 left-1/2 w-full h-0.5 bg-ifood-gray-200" />
-              )}
-              
-              <div className="relative inline-flex items-center justify-center w-20 h-20 bg-ifood-red/10 border-2 border-ifood-red rounded-full mb-6 z-10">
-                <step.icon className="w-8 h-8 text-ifood-red" />
+              <div className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-ifood-red/10 border-2 border-ifood-red rounded-full mb-4 md:mb-6 z-10">
+                <step.icon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-ifood-red" />
               </div>
-              <div className="font-oswald text-sm text-ifood-red font-bold mb-2">PASSO {index + 1}</div>
-              <h3 className="font-oswald text-xl font-bold text-ifood-gray-900 mb-2">{step.title}</h3>
-              <p className="text-ifood-gray-600 text-sm">{step.description}</p>
+              <div className="font-oswald text-xs sm:text-sm text-ifood-red font-bold mb-1 md:mb-2">PASSO {index + 1}</div>
+              <h3 className="font-oswald text-sm sm:text-base md:text-lg lg:text-xl font-bold text-ifood-gray-900 mb-1 md:mb-2">{step.title}</h3>
+              <p className="text-ifood-gray-600 text-xs sm:text-sm">{step.description}</p>
             </motion.div>
           ))}
         </div>
@@ -689,13 +1189,13 @@ const HowItWorksSection = () => {
 // Testimonials Section
 const TestimonialsSection = () => {
   return (
-    <section data-testid="testimonials-section" className="bg-white py-20 md:py-32">
+    <section data-testid="testimonials-section" className="bg-white py-16 md:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div {...fadeInUp} className="text-center mb-16">
-          <h2 className="font-oswald text-3xl sm:text-4xl lg:text-5xl font-bold text-ifood-gray-900 mb-4">
+        <motion.div {...fadeInUp} className="text-center mb-12 md:mb-16">
+          <h2 className="font-oswald text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-ifood-gray-900 mb-3 md:mb-4">
             O QUE DIZEM <span className="text-ifood-red">NOSSOS CLIENTES</span>
           </h2>
-          <p className="text-ifood-gray-600 text-lg">A opinião de quem já provou nossas marmitas</p>
+          <p className="text-ifood-gray-600 text-sm sm:text-base lg:text-lg">A opinião de quem já provou nossas marmitas</p>
         </motion.div>
 
         <motion.div
@@ -703,33 +1203,33 @@ const TestimonialsSection = () => {
           initial="initial"
           whileInView="whileInView"
           viewport={{ once: true }}
-          className="grid md:grid-cols-3 gap-8"
+          className="grid md:grid-cols-3 gap-6 md:gap-8"
         >
           {TESTIMONIALS.map((testimonial) => (
             <motion.div
               key={testimonial.id}
               variants={fadeInUp}
-              className="testimonial-card bg-ifood-gray-50 p-8 rounded-2xl"
+              className="testimonial-card bg-ifood-gray-50 p-6 md:p-8 rounded-xl md:rounded-2xl"
               data-testid={`testimonial-${testimonial.id}`}
             >
               {/* Stars */}
-              <div className="flex gap-1 mb-4">
+              <div className="flex gap-1 mb-3 md:mb-4">
                 {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-ifood-yellow text-ifood-yellow" />
+                  <Star key={i} className="w-4 h-4 sm:w-5 sm:h-5 fill-ifood-yellow text-ifood-yellow" />
                 ))}
               </div>
 
               {/* Text */}
-              <p className="text-ifood-gray-700 mb-6 leading-relaxed">{testimonial.text}</p>
+              <p className="text-ifood-gray-700 mb-4 md:mb-6 leading-relaxed text-sm sm:text-base">{testimonial.text}</p>
 
               {/* Author */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
                 <img
                   src={testimonial.avatar}
                   alt={testimonial.name}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-ifood-red"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-ifood-red"
                 />
-                <span className="font-bold text-ifood-gray-900">{testimonial.name}</span>
+                <span className="font-bold text-ifood-gray-900 text-sm sm:text-base">{testimonial.name}</span>
               </div>
             </motion.div>
           ))}
@@ -742,22 +1242,22 @@ const TestimonialsSection = () => {
 // Location Section with Google Maps
 const LocationSection = () => {
   return (
-    <section id="localizacao" data-testid="location-section" className="bg-ifood-gray-50 py-20 md:py-32">
+    <section id="localizacao" data-testid="location-section" className="bg-ifood-gray-50 py-16 md:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div {...fadeInUp} className="text-center mb-12">
-          <h2 className="font-oswald text-3xl sm:text-4xl lg:text-5xl font-bold text-ifood-gray-900 mb-4">
+        <motion.div {...fadeInUp} className="text-center mb-8 md:mb-12">
+          <h2 className="font-oswald text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-ifood-gray-900 mb-3 md:mb-4">
             NOSSA <span className="text-ifood-red">LOCALIZAÇÃO</span>
           </h2>
-          <p className="text-ifood-gray-600 text-lg">Venha nos visitar ou peça delivery!</p>
+          <p className="text-ifood-gray-600 text-sm sm:text-base lg:text-lg">Venha nos visitar ou peça delivery!</p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 items-center">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center">
           {/* Map */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="map-container h-[400px] bg-ifood-gray-200 rounded-2xl overflow-hidden"
+            className="map-container h-[250px] sm:h-[300px] md:h-[400px] bg-ifood-gray-200 rounded-xl md:rounded-2xl overflow-hidden"
           >
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3737.8894012018543!2d-54.62878368508556!3d-20.44882718635073!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9486e6726b4d4c27%3A0x9f7c96d7e9f8f8f8!2sCampo%20Grande%2C%20MS!5e0!3m2!1spt-BR!2sbr!4v1709999999999!5m2!1spt-BR!2sbr"
@@ -776,35 +1276,35 @@ const LocationSection = () => {
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="space-y-6"
+            className="space-y-4 md:space-y-6"
           >
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-ifood-red/10 rounded-xl">
-                <MapPinned className="w-6 h-6 text-ifood-red" />
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="p-2 sm:p-3 bg-ifood-red/10 rounded-xl">
+                <MapPinned className="w-5 h-5 sm:w-6 sm:h-6 text-ifood-red" />
               </div>
               <div>
-                <h3 className="font-bold text-ifood-gray-900 text-lg">Endereço</h3>
-                <p className="text-ifood-gray-600">{BUSINESS.address}</p>
+                <h3 className="font-bold text-ifood-gray-900 text-base sm:text-lg">Endereço</h3>
+                <p className="text-ifood-gray-600 text-sm sm:text-base">{BUSINESS.address}</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-ifood-red/10 rounded-xl">
-                <Clock className="w-6 h-6 text-ifood-red" />
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="p-2 sm:p-3 bg-ifood-red/10 rounded-xl">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-ifood-red" />
               </div>
               <div>
-                <h3 className="font-bold text-ifood-gray-900 text-lg">Horário</h3>
-                <p className="text-ifood-gray-600">{BUSINESS.hours}</p>
+                <h3 className="font-bold text-ifood-gray-900 text-base sm:text-lg">Horário</h3>
+                <p className="text-ifood-gray-600 text-sm sm:text-base">{BUSINESS.hours}</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-ifood-red/10 rounded-xl">
-                <Phone className="w-6 h-6 text-ifood-red" />
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="p-2 sm:p-3 bg-ifood-red/10 rounded-xl">
+                <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-ifood-red" />
               </div>
               <div>
-                <h3 className="font-bold text-ifood-gray-900 text-lg">WhatsApp</h3>
-                <a href={BUSINESS.whatsapp} className="text-ifood-red hover:text-ifood-red-dark font-medium">
+                <h3 className="font-bold text-ifood-gray-900 text-base sm:text-lg">WhatsApp</h3>
+                <a href={BUSINESS.whatsapp} className="text-ifood-red hover:text-ifood-red-dark font-medium text-sm sm:text-base">
                   {BUSINESS.phone}
                 </a>
               </div>
@@ -814,10 +1314,10 @@ const LocationSection = () => {
               href={BUSINESS.mapsLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-ifood-gray-900 text-white hover:bg-ifood-gray-800 font-bold px-6 py-3 rounded-full transition-all duration-300"
+              className="inline-flex items-center gap-2 bg-ifood-gray-900 text-white hover:bg-ifood-gray-800 font-bold px-5 sm:px-6 py-2.5 sm:py-3 rounded-full transition-all duration-300 text-sm sm:text-base"
               data-testid="open-maps-btn"
             >
-              <MapPin className="w-5 h-5" />
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
               Abrir no Google Maps
             </a>
           </motion.div>
@@ -827,197 +1327,105 @@ const LocationSection = () => {
   );
 };
 
-// Contact Section
-const ContactSection = () => {
+// Contact Section (Simplified - only today's menu)
+const ContactSection = ({ onOrderClick }) => {
   const today = getCurrentDay();
   const todayMenu = WEEKLY_MENU[today];
-  
-  const [formData, setFormData] = useState({
-    name: "",
-    whatsapp: "",
-    address: "",
-    marmita: todayMenu.name,
-    size: "M",
-    notes: "",
-  });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const message = `*Novo Pedido - Marmitaria da Xai*%0A%0A👤 *Nome:* ${formData.name}%0A📱 *WhatsApp:* ${formData.whatsapp}%0A📍 *Endereço:* ${formData.address}%0A🍽️ *Marmita:* ${formData.marmita} (${formData.size})%0A📝 *Observações:* ${formData.notes || "Nenhuma"}`;
-    window.open(`${BUSINESS.whatsapp}?text=${message}`, "_blank");
-  };
 
   return (
-    <section id="contato" data-testid="contact-section" className="bg-white py-20 md:py-32">
+    <section id="contato" data-testid="contact-section" className="bg-white py-16 md:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-2 gap-12">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-12">
           {/* Info */}
           <motion.div {...fadeInUp}>
-            <h2 className="font-oswald text-3xl sm:text-4xl lg:text-5xl font-bold text-ifood-gray-900 mb-6">
+            <h2 className="font-oswald text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-ifood-gray-900 mb-4 md:mb-6">
               FAÇA SEU <span className="text-ifood-red">PEDIDO</span>
             </h2>
-            <p className="text-ifood-gray-600 mb-10">
-              Preencha o formulário ou entre em contato pelo WhatsApp. Sua marmita quentinha está a um clique de distância!
+            <p className="text-ifood-gray-600 mb-6 md:mb-10 text-sm sm:text-base">
+              Clique no botão abaixo para fazer seu pedido. Você poderá escolher o tamanho, adicionar bebidas e selecionar a forma de pagamento!
             </p>
 
-            <div className="space-y-6 mb-10">
-              <div className="flex items-start gap-4">
-                <MapPin className="w-6 h-6 text-ifood-red flex-shrink-0 mt-1" />
+            <div className="space-y-4 md:space-y-6 mb-8 md:mb-10">
+              <div className="flex items-start gap-3 md:gap-4">
+                <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-ifood-red flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-bold text-ifood-gray-900">Endereço</h3>
-                  <p className="text-ifood-gray-600">{BUSINESS.address}</p>
+                  <h3 className="font-bold text-ifood-gray-900 text-sm sm:text-base">Endereço</h3>
+                  <p className="text-ifood-gray-600 text-sm sm:text-base">{BUSINESS.address}</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <Phone className="w-6 h-6 text-ifood-red flex-shrink-0 mt-1" />
+              <div className="flex items-start gap-3 md:gap-4">
+                <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-ifood-red flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-bold text-ifood-gray-900">WhatsApp</h3>
-                  <a href={BUSINESS.whatsapp} className="text-ifood-red hover:text-ifood-red-dark font-medium">
+                  <h3 className="font-bold text-ifood-gray-900 text-sm sm:text-base">WhatsApp</h3>
+                  <a href={BUSINESS.whatsapp} className="text-ifood-red hover:text-ifood-red-dark font-medium text-sm sm:text-base">
                     {BUSINESS.phone}
                   </a>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <Clock className="w-6 h-6 text-ifood-red flex-shrink-0 mt-1" />
+              <div className="flex items-start gap-3 md:gap-4">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-ifood-red flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-bold text-ifood-gray-900">Horário</h3>
-                  <p className="text-ifood-gray-600">{BUSINESS.hours}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <ExternalLink className="w-6 h-6 text-ifood-red flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-bold text-ifood-gray-900">Loja Online</h3>
-                  <a
-                    href={BUSINESS.store}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-ifood-red hover:text-ifood-red-dark font-medium"
-                  >
-                    Acesse nossa loja
-                  </a>
+                  <h3 className="font-bold text-ifood-gray-900 text-sm sm:text-base">Horário</h3>
+                  <p className="text-ifood-gray-600 text-sm sm:text-base">{BUSINESS.hours}</p>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Form */}
+          {/* Today's Menu Card with Order Button */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <form onSubmit={handleSubmit} className="bg-ifood-gray-50 p-8 rounded-2xl" data-testid="order-form">
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-ifood-gray-700 mb-2">Nome</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="form-input w-full px-4 py-3 bg-white border border-ifood-gray-300 rounded-xl text-ifood-gray-900 placeholder-ifood-gray-400 focus:outline-none transition-all duration-300"
-                    placeholder="Seu nome"
-                    data-testid="input-name"
-                  />
+            <div className="bg-ifood-gray-50 rounded-2xl md:rounded-3xl overflow-hidden shadow-xl">
+              <div className="relative">
+                <img
+                  src={todayMenu.image}
+                  alt={todayMenu.name}
+                  className="w-full h-48 sm:h-56 md:h-64 object-cover"
+                />
+                <div className="absolute top-4 right-4 bg-ifood-red text-white font-bold px-3 sm:px-4 py-1 sm:py-2 rounded-full text-sm">
+                  DISPONÍVEL HOJE
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-ifood-gray-700 mb-2">WhatsApp</label>
-                  <input
-                    type="tel"
-                    name="whatsapp"
-                    value={formData.whatsapp}
-                    onChange={handleChange}
-                    required
-                    className="form-input w-full px-4 py-3 bg-white border border-ifood-gray-300 rounded-xl text-ifood-gray-900 placeholder-ifood-gray-400 focus:outline-none transition-all duration-300"
-                    placeholder="(67) 99999-9999"
-                    data-testid="input-whatsapp"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-ifood-gray-700 mb-2">Endereço de Entrega</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    required
-                    className="form-input w-full px-4 py-3 bg-white border border-ifood-gray-300 rounded-xl text-ifood-gray-900 placeholder-ifood-gray-400 focus:outline-none transition-all duration-300"
-                    placeholder="Rua, número, bairro"
-                    data-testid="input-address"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-ifood-gray-700 mb-2">Marmita</label>
-                    <select
-                      name="marmita"
-                      value={formData.marmita}
-                      onChange={handleChange}
-                      required
-                      className="form-input w-full px-4 py-3 bg-white border border-ifood-gray-300 rounded-xl text-ifood-gray-900 focus:outline-none transition-all duration-300"
-                      data-testid="select-marmita"
-                    >
-                      {Object.values(WEEKLY_MENU).map((item) => (
-                        <option key={item.name} value={item.name}>
-                          {item.name} ({item.shortDay})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-ifood-gray-700 mb-2">Tamanho</label>
-                    <select
-                      name="size"
-                      value={formData.size}
-                      onChange={handleChange}
-                      required
-                      className="form-input w-full px-4 py-3 bg-white border border-ifood-gray-300 rounded-xl text-ifood-gray-900 focus:outline-none transition-all duration-300"
-                      data-testid="select-size"
-                    >
-                      <option value="P">P - Pequeno</option>
-                      <option value="M">M - Médio</option>
-                      <option value="G">G - Grande</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-ifood-gray-700 mb-2">Observações</label>
-                  <textarea
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleChange}
-                    rows={3}
-                    className="form-input w-full px-4 py-3 bg-white border border-ifood-gray-300 rounded-xl text-ifood-gray-900 placeholder-ifood-gray-400 focus:outline-none transition-all duration-300 resize-none"
-                    placeholder="Ex: Sem cebola, bem passado..."
-                    data-testid="textarea-notes"
-                  />
+              </div>
+              <div className="p-5 sm:p-6 md:p-8">
+                <span className="text-ifood-red font-bold text-sm">{todayMenu.day.toUpperCase()}</span>
+                <h3 className="font-oswald text-xl sm:text-2xl font-bold text-ifood-gray-900 mt-1 mb-2 sm:mb-3">
+                  {todayMenu.name}
+                </h3>
+                <p className="text-ifood-gray-600 text-sm mb-4">{todayMenu.description}</p>
+                
+                <div className="flex gap-3 sm:gap-4 mb-5 sm:mb-6">
+                  {Object.entries(todayMenu.prices).map(([size, price]) => (
+                    <div key={size} className="text-center">
+                      <span className="block text-xs text-ifood-gray-500 uppercase">{size}</span>
+                      <span className="font-oswald text-lg sm:text-xl text-ifood-red font-bold">R${price}</span>
+                    </div>
+                  ))}
                 </div>
 
                 <button
-                  type="submit"
-                  className="btn-primary w-full flex items-center justify-center gap-2 bg-ifood-red text-white hover:bg-ifood-red-dark font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-                  data-testid="submit-order-btn"
+                  onClick={onOrderClick}
+                  className="w-full flex items-center justify-center gap-2 bg-ifood-red text-white hover:bg-ifood-red-dark font-bold py-3 sm:py-4 rounded-full transition-all duration-300 shadow-lg text-sm sm:text-base"
+                  data-testid="contact-order-btn"
                 >
-                  <WhatsAppIcon className="w-5 h-5" />
-                  Enviar pelo WhatsApp
+                  <ShoppingBag className="w-5 h-5" />
+                  Fazer Pedido Completo
                 </button>
+
+                {/* Other days locked */}
+                <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-ifood-gray-200">
+                  <p className="text-xs sm:text-sm text-ifood-gray-500 text-center flex items-center justify-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Outros dias do cardápio ficam disponíveis no dia respectivo
+                  </p>
+                </div>
               </div>
-            </form>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -1028,18 +1436,18 @@ const ContactSection = () => {
 // Footer
 const Footer = () => {
   return (
-    <footer data-testid="footer" className="bg-ifood-gray-900 py-12">
+    <footer data-testid="footer" className="bg-ifood-gray-900 py-10 md:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-3 gap-8 mb-8">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 mb-8">
           {/* Logo & Description */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-ifood-red rounded-full flex items-center justify-center">
-                <ChefHat className="w-6 h-6 text-white" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-ifood-red rounded-full flex items-center justify-center">
+                <ChefHat className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <span className="font-oswald text-2xl text-white font-bold">Marmitaria da Xai</span>
+              <span className="font-oswald text-xl sm:text-2xl text-white font-bold">Marmitaria da Xai</span>
             </div>
-            <p className="text-ifood-gray-400 mb-4">{BUSINESS.slogan}</p>
+            <p className="text-ifood-gray-400 mb-4 text-sm sm:text-base">{BUSINESS.slogan}</p>
             <div className="flex items-center gap-4">
               <a
                 href={BUSINESS.instagramUrl}
@@ -1049,7 +1457,7 @@ const Footer = () => {
                 data-testid="footer-instagram"
                 aria-label="Instagram"
               >
-                <Instagram className="w-6 h-6" />
+                <Instagram className="w-5 h-5 sm:w-6 sm:h-6" />
               </a>
               <a
                 href={BUSINESS.whatsapp}
@@ -1058,25 +1466,25 @@ const Footer = () => {
                 className="text-white hover:text-ifood-red transition-colors"
                 aria-label="WhatsApp"
               >
-                <WhatsAppIcon className="w-6 h-6" />
+                <WhatsAppIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               </a>
             </div>
           </div>
 
           {/* Contact Info */}
           <div>
-            <h3 className="font-oswald text-lg font-bold text-white mb-4">CONTATO</h3>
-            <div className="space-y-3 text-ifood-gray-400">
+            <h3 className="font-oswald text-base sm:text-lg font-bold text-white mb-4">CONTATO</h3>
+            <div className="space-y-2 sm:space-y-3 text-ifood-gray-400 text-sm sm:text-base">
               <p className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-ifood-red" />
-                {BUSINESS.address}
+                <MapPin className="w-4 h-4 text-ifood-red flex-shrink-0" />
+                <span className="break-words">{BUSINESS.address}</span>
               </p>
               <p className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-ifood-red" />
+                <Phone className="w-4 h-4 text-ifood-red flex-shrink-0" />
                 {BUSINESS.phone}
               </p>
               <p className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-ifood-red" />
+                <Clock className="w-4 h-4 text-ifood-red flex-shrink-0" />
                 {BUSINESS.hours}
               </p>
             </div>
@@ -1084,8 +1492,8 @@ const Footer = () => {
 
           {/* Links */}
           <div>
-            <h3 className="font-oswald text-lg font-bold text-white mb-4">LINKS ÚTEIS</h3>
-            <div className="space-y-3">
+            <h3 className="font-oswald text-base sm:text-lg font-bold text-white mb-4">LINKS ÚTEIS</h3>
+            <div className="space-y-2 sm:space-y-3 text-sm sm:text-base">
               <a href="#cardapio" className="block text-ifood-gray-400 hover:text-white transition-colors">
                 Cardápio da Semana
               </a>
@@ -1110,8 +1518,8 @@ const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-ifood-gray-800 pt-8 text-center">
-          <p className="text-ifood-gray-500 text-sm">
+        <div className="border-t border-ifood-gray-800 pt-6 sm:pt-8 text-center">
+          <p className="text-ifood-gray-500 text-xs sm:text-sm">
             © {new Date().getFullYear()} Marmitaria da Xai. Todos os direitos reservados.
           </p>
         </div>
@@ -1121,37 +1529,49 @@ const Footer = () => {
 };
 
 // WhatsApp Float Button
-const WhatsAppFloatButton = () => {
+const WhatsAppFloatButton = ({ onClick }) => {
   return (
-    <a
-      href={BUSINESS.whatsapp}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="whatsapp-pulse fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300"
+    <button
+      onClick={onClick}
+      className="whatsapp-pulse fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 bg-[#25D366] text-white p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300"
       data-testid="whatsapp-float-btn"
-      aria-label="Contato via WhatsApp"
+      aria-label="Fazer pedido via WhatsApp"
     >
-      <WhatsAppIcon className="w-7 h-7" />
-    </a>
+      <WhatsAppIcon className="w-6 h-6 sm:w-7 sm:h-7" />
+    </button>
   );
 };
 
 // Main App Component
 function App() {
+  const [orderPopupOpen, setOrderPopupOpen] = useState(false);
+  const todayMenu = WEEKLY_MENU[getCurrentDay()];
+
+  const handleOrderClick = () => {
+    setOrderPopupOpen(true);
+  };
+
   return (
     <div className="App">
-      <Navbar />
-      <HeroSection />
+      <Navbar onOrderClick={handleOrderClick} />
+      <HeroSection onOrderClick={handleOrderClick} />
       <FeaturesBar />
-      <WeeklyMenuSection />
+      <WeeklyMenuSection onOrderClick={handleOrderClick} />
       <GallerySection />
-      <DeliverySection />
+      <DeliverySection onOrderClick={handleOrderClick} />
       <HowItWorksSection />
       <TestimonialsSection />
       <LocationSection />
-      <ContactSection />
+      <ContactSection onOrderClick={handleOrderClick} />
       <Footer />
-      <WhatsAppFloatButton />
+      <WhatsAppFloatButton onClick={handleOrderClick} />
+      
+      {/* Order Popup */}
+      <OrderPopup
+        isOpen={orderPopupOpen}
+        onClose={() => setOrderPopupOpen(false)}
+        todayMenu={todayMenu}
+      />
     </div>
   );
 }
