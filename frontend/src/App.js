@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "@/App.css";
+import ProtecaoSenha from "./ProtecaoSenha";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone,
@@ -1695,27 +1696,29 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <Navbar onOrderClick={handleOrderClick} />
-      <HeroSection onOrderClick={handleOrderClick} />
-      <FeaturesBar />
-      <WeeklyMenuSection onOrderClick={handleOrderClick} />
-      <GallerySection />
-      <DeliverySection onOrderClick={handleOrderClick} />
-      <HowItWorksSection />
-      <TestimonialsSection />
-      <LocationSection />
-      <ContactSection onOrderClick={handleOrderClick} />
-      <Footer />
-      <WhatsAppFloatButton onClick={handleOrderClick} />
-      
-      {/* Order Popup */}
-      <OrderPopup
-        isOpen={orderPopupOpen}
-        onClose={() => setOrderPopupOpen(false)}
-        todayMenu={todayMenu}
-      />
-    </div>
+    <ProtecaoSenha>
+      <div className="App">
+        <Navbar onOrderClick={handleOrderClick} />
+        <HeroSection onOrderClick={handleOrderClick} />
+        <FeaturesBar />
+        <WeeklyMenuSection onOrderClick={handleOrderClick} />
+        <GallerySection />
+        <DeliverySection onOrderClick={handleOrderClick} />
+        <HowItWorksSection />
+        <TestimonialsSection />
+        <LocationSection />
+        <ContactSection onOrderClick={handleOrderClick} />
+        <Footer />
+        <WhatsAppFloatButton onClick={handleOrderClick} />
+        
+        {/* Order Popup */}
+        <OrderPopup
+          isOpen={orderPopupOpen}
+          onClose={() => setOrderPopupOpen(false)}
+          todayMenu={todayMenu}
+        />
+      </div>
+    </ProtecaoSenha>
   );
 }
 
