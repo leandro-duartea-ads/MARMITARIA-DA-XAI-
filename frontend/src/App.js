@@ -116,6 +116,12 @@ const BEVERAGES = [
   { id: 6, name: "Água Mineral", price: 3 },
 ];
 
+// Sobremesas disponíveis
+const DESSERTS = [
+  { id: 1, name: "Tortinhas de Mousse de Maracujá com Chocolate", price: 7 },
+  { id: 2, name: "Pudim de Leite Condensado com Leite Ninho", price: 6 },
+];
+
 // Formas de pagamento
 const PAYMENT_METHODS = [
   { id: "pix", name: "Pix", icon: QrCode },
@@ -196,6 +202,21 @@ const getCurrentDay = () => {
   return day === 0 ? 1 : day; // Se for domingo, mostra segunda
 };
 
+// Cake/Dessert Icon
+const CakeIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" />
+    <path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1" />
+    <path d="M2 21h20" />
+    <path d="M7 8v3" />
+    <path d="M12 8v3" />
+    <path d="M17 8v3" />
+    <path d="M7 4h.01" />
+    <path d="M12 4h.01" />
+    <path d="M17 4h.01" />
+  </svg>
+);
+
 // Order Popup Component
 const OrderPopup = ({ isOpen, onClose, todayMenu }) => {
   const [formData, setFormData] = useState({
@@ -203,9 +224,9 @@ const OrderPopup = ({ isOpen, onClose, todayMenu }) => {
     phone: "",
     address: "",
     reference: "",
-    size: "M",
-    quantity: 1,
+    marmitas: { P: 0, M: 0, G: 0 },
     beverages: [],
+    desserts: [],
     paymentMethod: "pix",
     change: "",
     notes: "",
@@ -213,6 +234,16 @@ const OrderPopup = ({ isOpen, onClose, todayMenu }) => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const updateMarmitaQty = (size, delta) => {
+    setFormData({
+      ...formData,
+      marmitas: {
+        ...formData.marmitas,
+        [size]: Math.max(0, formData.marmitas[size] + delta)
+      }
+    });
   };
 
   const handleBeverageToggle = (beverage) => {
@@ -239,14 +270,51 @@ const OrderPopup = ({ isOpen, onClose, todayMenu }) => {
     });
   };
 
+  const handleDessertToggle = (dessert) => {
+    const exists = formData.desserts.find(d => d.id === dessert.id);
+    if (exists) {
+      setFormData({
+        ...formData,
+        desserts: formData.desserts.filter(d => d.id !== dessert.id)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        desserts: [...formData.desserts, { ...dessert, qty: 1 }]
+      });
+    }
+  };
+
+  const updateDessertQty = (id, delta) => {
+    setFormData({
+      ...formData,
+      desserts: formData.desserts.map(d => 
+        d.id === id ? { ...d, qty: Math.max(1, d.qty + delta) } : d
+      )
+    });
+  };
+
+  const getTotalMarmitas = () => {
+    return formData.marmitas.P + formData.marmitas.M + formData.marmitas.G;
+  };
+
   const calculateTotal = () => {
-    const marmitaPrice = todayMenu.prices[formData.size] * formData.quantity;
+    const marmitaPrice = 
+      (formData.marmitas.P * todayMenu.prices.P) +
+      (formData.marmitas.M * todayMenu.prices.M) +
+      (formData.marmitas.G * todayMenu.prices.G);
     const beveragesPrice = formData.beverages.reduce((acc, b) => acc + (b.price * b.qty), 0);
-    return marmitaPrice + beveragesPrice;
+    const dessertsPrice = formData.desserts.reduce((acc, d) => acc + (d.price * d.qty), 0);
+    return marmitaPrice + beveragesPrice + dessertsPrice;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (getTotalMarmitas() === 0) {
+      alert("Por favor, selecione pelo menos uma marmita!");
+      return;
+    }
     
     let message = `*🍽️ NOVO PEDIDO - Marmitaria da Xai*%0A%0A`;
     message += `👤 *Cliente:* ${formData.name}%0A`;
@@ -258,13 +326,28 @@ const OrderPopup = ({ isOpen, onClose, todayMenu }) => {
     message += `%0A`;
     message += `*━━━ PEDIDO ━━━*%0A`;
     message += `🍱 *${todayMenu.name}*%0A`;
-    message += `   Tamanho: ${formData.size} | Qtd: ${formData.quantity}%0A`;
-    message += `   R$ ${(todayMenu.prices[formData.size] * formData.quantity).toFixed(2)}%0A`;
+    
+    if (formData.marmitas.P > 0) {
+      message += `   P (Pequena) x${formData.marmitas.P} - R$ ${(formData.marmitas.P * todayMenu.prices.P).toFixed(2)}%0A`;
+    }
+    if (formData.marmitas.M > 0) {
+      message += `   M (Média) x${formData.marmitas.M} - R$ ${(formData.marmitas.M * todayMenu.prices.M).toFixed(2)}%0A`;
+    }
+    if (formData.marmitas.G > 0) {
+      message += `   G (Grande) x${formData.marmitas.G} - R$ ${(formData.marmitas.G * todayMenu.prices.G).toFixed(2)}%0A`;
+    }
     
     if (formData.beverages.length > 0) {
       message += `%0A🥤 *Bebidas:*%0A`;
       formData.beverages.forEach(b => {
         message += `   ${b.name} x${b.qty} - R$ ${(b.price * b.qty).toFixed(2)}%0A`;
+      });
+    }
+
+    if (formData.desserts.length > 0) {
+      message += `%0A🍰 *Sobremesas:*%0A`;
+      formData.desserts.forEach(d => {
+        message += `   ${d.name} x${d.qty} - R$ ${(d.price * d.qty).toFixed(2)}%0A`;
       });
     }
     
@@ -391,15 +474,20 @@ const OrderPopup = ({ isOpen, onClose, todayMenu }) => {
             <div className="space-y-4">
               <h3 className="font-bold text-ifood-gray-900 flex items-center gap-2">
                 <div className="w-6 h-6 bg-ifood-red text-white rounded-full flex items-center justify-center text-sm">2</div>
-                Sua Marmita
+                Suas Marmitas
+                {getTotalMarmitas() > 0 && (
+                  <span className="ml-auto bg-ifood-red text-white text-xs px-2 py-1 rounded-full">
+                    {getTotalMarmitas()} {getTotalMarmitas() === 1 ? 'unidade' : 'unidades'}
+                  </span>
+                )}
               </h3>
 
               <div className="bg-ifood-gray-50 p-4 rounded-xl">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mb-4">
                   <img
                     src={todayMenu.image}
                     alt={todayMenu.name}
-                    className="w-20 h-20 rounded-xl object-cover"
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover"
                   />
                   <div className="flex-1">
                     <h4 className="font-bold text-ifood-gray-900">{todayMenu.name}</h4>
@@ -407,51 +495,52 @@ const OrderPopup = ({ isOpen, onClose, todayMenu }) => {
                   </div>
                 </div>
 
-                {/* Tamanho */}
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-ifood-gray-700 mb-2">Tamanho</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {Object.entries(todayMenu.prices).map(([size, price]) => (
-                      <button
+                {/* Tamanhos com quantidade individual */}
+                <div className="space-y-3">
+                  {Object.entries(todayMenu.prices).map(([size, price]) => {
+                    const sizeLabels = { P: "Pequena", M: "Média", G: "Grande" };
+                    return (
+                      <div
                         key={size}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, size })}
                         className={`p-3 rounded-xl border-2 transition-all ${
-                          formData.size === size
+                          formData.marmitas[size] > 0
                             ? "border-ifood-red bg-ifood-red/5"
-                            : "border-ifood-gray-200 hover:border-ifood-gray-300"
+                            : "border-ifood-gray-200"
                         }`}
-                        data-testid={`size-btn-${size}`}
                       >
-                        <span className="block font-bold text-ifood-gray-900">{size}</span>
-                        <span className="block text-ifood-red font-bold">R${price}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quantidade */}
-                <div className="mt-4 flex items-center justify-between">
-                  <label className="text-sm font-medium text-ifood-gray-700">Quantidade</label>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, quantity: Math.max(1, formData.quantity - 1) })}
-                      className="w-10 h-10 rounded-full border-2 border-ifood-gray-300 flex items-center justify-center hover:border-ifood-red transition-colors"
-                      data-testid="qty-minus-btn"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="w-8 text-center font-bold text-lg">{formData.quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, quantity: formData.quantity + 1 })}
-                      className="w-10 h-10 rounded-full border-2 border-ifood-red bg-ifood-red text-white flex items-center justify-center hover:bg-ifood-red-dark transition-colors"
-                      data-testid="qty-plus-btn"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-bold text-ifood-gray-900">{size}</span>
+                            <span className="text-sm text-ifood-gray-500 ml-2">({sizeLabels[size]})</span>
+                            <span className="block text-ifood-red font-bold">R$ {price},00</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => updateMarmitaQty(size, -1)}
+                              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                formData.marmitas[size] > 0 
+                                  ? "border-ifood-red text-ifood-red hover:bg-ifood-red/10" 
+                                  : "border-ifood-gray-300 text-ifood-gray-400"
+                              }`}
+                              data-testid={`size-${size}-minus`}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="w-8 text-center font-bold text-lg">{formData.marmitas[size]}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateMarmitaQty(size, 1)}
+                              className="w-8 h-8 rounded-full bg-ifood-red text-white flex items-center justify-center hover:bg-ifood-red-dark transition-colors"
+                              data-testid={`size-${size}-plus`}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -510,10 +599,64 @@ const OrderPopup = ({ isOpen, onClose, todayMenu }) => {
               </div>
             </div>
 
-            {/* Pagamento */}
+            {/* Sobremesas */}
             <div className="space-y-4">
               <h3 className="font-bold text-ifood-gray-900 flex items-center gap-2">
                 <div className="w-6 h-6 bg-ifood-red text-white rounded-full flex items-center justify-center text-sm">4</div>
+                Adicionar Sobremesa?
+                <span className="text-sm font-normal text-ifood-gray-500">(opcional)</span>
+              </h3>
+
+              <div className="grid grid-cols-1 gap-2">
+                {DESSERTS.map((dessert) => {
+                  const selected = formData.desserts.find(d => d.id === dessert.id);
+                  return (
+                    <div
+                      key={dessert.id}
+                      className={`p-3 rounded-xl border-2 transition-all cursor-pointer ${
+                        selected
+                          ? "border-ifood-red bg-ifood-red/5"
+                          : "border-ifood-gray-200 hover:border-ifood-gray-300"
+                      }`}
+                      onClick={() => handleDessertToggle(dessert)}
+                      data-testid={`dessert-${dessert.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CakeIcon className="w-4 h-4 text-ifood-gray-500" />
+                          <span className="text-sm font-medium">{dessert.name}</span>
+                        </div>
+                        <span className="text-ifood-red font-bold text-sm">R${dessert.price}</span>
+                      </div>
+                      {selected && (
+                        <div className="flex items-center justify-end gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); updateDessertQty(dessert.id, -1); }}
+                            className="w-6 h-6 rounded-full border border-ifood-gray-300 flex items-center justify-center"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm font-bold">{selected.qty}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); updateDessertQty(dessert.id, 1); }}
+                            className="w-6 h-6 rounded-full bg-ifood-red text-white flex items-center justify-center"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Pagamento */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-ifood-gray-900 flex items-center gap-2">
+                <div className="w-6 h-6 bg-ifood-red text-white rounded-full flex items-center justify-center text-sm">5</div>
                 Forma de Pagamento
               </h3>
 
